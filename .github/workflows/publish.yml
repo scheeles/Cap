@@ -148,6 +148,7 @@ jobs:
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
     runs-on: ${{ matrix.settings.runner }}
     steps:
       - name: Checkout repository
@@ -156,17 +157,17 @@ jobs:
           ref: ${{ needs.draft.outputs.tag_name }}
 
       - name: Create API Key File
-        if: ${{ secrets.APPLE_API_KEY_FILE != '' }}
+        if: ${{ runner.os == 'macOS' }}
         run: echo "${{ secrets.APPLE_API_KEY_FILE }}" > api.p8
 
       - uses: apple-actions/import-codesign-certs@v2
-        if: ${{ runner.os == 'macOS' && secrets.APPLE_CERTIFICATE != '' }}
+        if: ${{ runner.os == 'macOS' && env.APPLE_CERTIFICATE != '' }}
         with:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
 
       - name: Verify certificate
-        if: ${{ runner.os == 'macOS' && secrets.APPLE_CERTIFICATE != '' }}
+        if: ${{ runner.os == 'macOS' && env.APPLE_CERTIFICATE != '' }}
         run: security find-identity -v -p codesigning ${{ runner.temp }}/build.keychain
 
       - name: Rust setup
